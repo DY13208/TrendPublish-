@@ -1,3 +1,5 @@
+import { handleMcpHttpRequest } from "@src/app/mcp/mcp-http.ts";
+import { createDefaultMcpContext } from "@src/app/mcp/mcp-context.ts";
 import {
   createFreePublishService,
   getLocalPublishRecordStore,
@@ -608,6 +610,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
     if (url.pathname === "/api/runs" || url.pathname.startsWith("/api/runs/")) {
       return await handleRunsRequest(req, url.pathname);
+    }
+    if (url.pathname === "/mcp") {
+      const unauthorized = await verifyRequestAuth(req);
+      if (unauthorized) return unauthorized;
+      const config = await getAppConfig();
+      return await handleMcpHttpRequest(
+        req,
+        () => Promise.resolve(createDefaultMcpContext(config)),
+      );
     }
     if (url.pathname.startsWith("/api/publish/")) {
       return await handlePublishRequest(req, url);

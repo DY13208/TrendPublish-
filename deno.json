@@ -14,6 +14,7 @@
     "cf": "deno run -A scripts/task-runner.ts cf",
     "build": "deno run -A scripts/task-runner.ts build",
     "dashboard": "deno run -A scripts/task-runner.ts dashboard",
+    "mcp:stdio": "deno run -A scripts/mcp-stdio.ts",
     "docs": "deno run -A scripts/task-runner.ts docs"
   },
   "imports": {
