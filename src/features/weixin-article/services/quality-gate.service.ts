@@ -28,15 +28,7 @@ export function evaluateArticleQualityGate(
     };
   }
 
-  if (!input.config.enabled) {
-    return {
-      allowed: true,
-      bypassed: false,
-      action: "disabled",
-      reason: "质量门禁未启用",
-    };
-  }
-
+  // 真实发布时即使配置关闭门禁（enabled=false）也强制评估，避免绕过。
   const blockReason = getQualityBlockReason(input.review, input.config);
   if (!blockReason) {
     return {
@@ -47,24 +39,16 @@ export function evaluateArticleQualityGate(
     };
   }
 
-  const configForcePublish = input.config.forcePublish === true;
-  const requestForcePublish = input.forcePublish &&
-    input.config.allowForcePublish;
-  if (configForcePublish || requestForcePublish) {
-    const source = configForcePublish ? "配置项 forcePublish" : "forcePublish";
-    return {
-      allowed: true,
-      bypassed: true,
-      action: "bypass",
-      reason: `${source} 已绕过质量门禁: ${blockReason}`,
-    };
-  }
-
+  // 真实发布不允许绕过质量门禁：forcePublish（请求或配置）只记录，不再放行。
+  const bypassRequested = input.config.forcePublish === true ||
+    input.forcePublish === true;
   return {
     allowed: false,
     bypassed: false,
     action: "block",
-    reason: blockReason,
+    reason: bypassRequested
+      ? `${blockReason}（已忽略 forcePublish：真实发布不允许绕过质量门禁）`
+      : blockReason,
   };
 }
 

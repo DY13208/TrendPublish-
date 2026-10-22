@@ -1,5 +1,6 @@
 import cron from "npm:node-cron@3.0.3";
 import { Logger } from "@zilla/logger";
+import { isPublishEnabled } from "@src/utils/security/publish-guard.ts";
 import { LocalWorkflowRuntime } from "@src/core/workflow/local-workflow-runtime.ts";
 import {
   createLocalWeixinArticleWorkflowDefinition,
@@ -54,7 +55,8 @@ export const startCronJobs = async () => {
             payload: {
               runId,
               trigger: "cron",
-              dryRun: due.schedule.dryRun,
+              // PUBLISH_ENABLED 未开启时，所有计划强制 dry-run。
+              dryRun: due.schedule.dryRun || !isPublishEnabled(),
               profileId: due.schedule.profileId,
             },
             id: runId,

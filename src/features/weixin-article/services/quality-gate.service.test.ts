@@ -41,15 +41,15 @@ Deno.test("quality gate never blocks dry-run", () => {
   assertEquals(decision.action, "allow-dry-run");
 });
 
-Deno.test("quality gate allows publish when disabled", () => {
+Deno.test("quality gate still blocks real publish when disabled in config", () => {
   const decision = evaluateArticleQualityGate({
     review: { ...baseReview, overallScore: 20, allowPublish: false },
     config: { ...baseConfig, enabled: false },
     dryRun: false,
   });
 
-  assertEquals(decision.allowed, true);
-  assertEquals(decision.action, "disabled");
+  assertEquals(decision.allowed, false);
+  assertEquals(decision.action, "block");
 });
 
 Deno.test("quality gate blocks low score real publish", () => {
@@ -84,7 +84,7 @@ Deno.test("quality gate blocks high fact issue", () => {
   assertEquals(decision.reason.includes("高危事实问题"), true);
 });
 
-Deno.test("quality gate can be bypassed by forcePublish when allowed", () => {
+Deno.test("quality gate ignores request forcePublish for real publish", () => {
   const decision = evaluateArticleQualityGate({
     review: { ...baseReview, overallScore: 70 },
     config: baseConfig,
@@ -92,12 +92,12 @@ Deno.test("quality gate can be bypassed by forcePublish when allowed", () => {
     forcePublish: true,
   });
 
-  assertEquals(decision.allowed, true);
-  assertEquals(decision.bypassed, true);
-  assertEquals(decision.action, "bypass");
+  assertEquals(decision.allowed, false);
+  assertEquals(decision.bypassed, false);
+  assertEquals(decision.action, "block");
 });
 
-Deno.test("quality gate can be bypassed by config forcePublish", () => {
+Deno.test("quality gate ignores config forcePublish for real publish", () => {
   const decision = evaluateArticleQualityGate({
     review: { ...baseReview, overallScore: 70 },
     config: {
@@ -108,7 +108,7 @@ Deno.test("quality gate can be bypassed by config forcePublish", () => {
     dryRun: false,
   });
 
-  assertEquals(decision.allowed, true);
-  assertEquals(decision.bypassed, true);
-  assertEquals(decision.reason.includes("配置项 forcePublish"), true);
+  assertEquals(decision.allowed, false);
+  assertEquals(decision.bypassed, false);
+  assertEquals(decision.reason.includes("已忽略 forcePublish"), true);
 });

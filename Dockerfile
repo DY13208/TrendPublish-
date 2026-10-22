@@ -26,4 +26,5 @@ USER deno
 
 EXPOSE 8000
 
-CMD ["deno", "task", "dev"]
+# 生产启动：只运行后端（dashboard 已在构建阶段打包到 dist/dashboard，由后端静态服务）
+CMD ["deno", "run", "-A", "src/index.ts"]

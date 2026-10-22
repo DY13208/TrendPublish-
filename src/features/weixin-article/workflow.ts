@@ -1,3 +1,9 @@
+import { MemoryPublishRecordStore } from "@src/core/storage/memory-publish-record-store.ts";
+import {
+  computePublishTaskIdentity,
+  guardedPublish,
+} from "@src/features/weixin-article/services/publish-idempotency.service.ts";
+import { isPublishEnabled } from "@src/utils/security/publish-guard.ts";
 import {
   WorkflowEvent,
   WorkflowStepContext,
@@ -35,6 +41,7 @@ import {
 } from "@src/features/weixin-article/services/account-learning-snapshot.ts";
 import type { ResolvedTrendPublishConfig } from "@src/utils/config/define-config.ts";
 
+const fallbackPublishRecordStore = new MemoryPublishRecordStore();
 const logger = new Logger("weixin-article-workflow");
 
 interface WeixinWorkflowEnv {
@@ -46,6 +53,8 @@ interface WeixinWorkflowParams {
   sourceType?: ArticleSourceFilter;
   maxArticles?: number;
   forcePublish?: boolean;
+  /** 可选业务键；提供时 taskId = 账号 + 业务键，否则用内容哈希。 */
+  businessKey?: string;
   dryRun?: boolean;
   dryRunOutputDir?: string;
   runId?: string;
@@ -835,7 +844,8 @@ export class WeixinArticleWorkflow {
         runId,
         "publish-article",
         {
-          retries: { limit: 3, delay: "10 second", backoff: "exponential" },
+          // 每次重试都会重新走“先查记录/平台状态再写入”，不会盲目重复创建草稿。
+          retries: { limit: 2, delay: "10 second", backoff: "exponential" },
           timeout: "5 minutes",
         },
         async () => {
@@ -886,10 +896,12 @@ export class WeixinArticleWorkflow {
             }
             : blockedPublishResult
             ? blockedPublishResult
-            : await this.publishArticle(
+            : await this.publishArticleIdempotently(
               renderedTemplate,
               finalTitle,
               mediaId,
+              runId,
+              event.payload.businessKey,
             );
           const ref = await artifactStore.putJson(
             publishResultKey,
@@ -1036,9 +1048,44 @@ export class WeixinArticleWorkflow {
     });
   }
 
+  private async publishArticleIdempotently(
+    renderedTemplate: string,
+    summaryTitle: string,
+    mediaId: string,
+    runId: string,
+    businessKey?: string,
+  ): Promise<PublishResult> {
+    const identity = await computePublishTaskIdentity({
+      accountId: this.dependencies.config.accountId,
+      title: summaryTitle,
+      content: renderedTemplate,
+      businessKey,
+    });
+    logger.info(`[发布] taskId=${identity.taskId}`);
+    const publisher = this.dependencies.publisher;
+    const outcome = await guardedPublish({
+      store: this.dependencies.runtime.publishRecordStore ??
+        fallbackPublishRecordStore,
+      identity,
+      title: summaryTitle,
+      runId,
+      publish: () =>
+        this.publishArticle(renderedTemplate, summaryTitle, mediaId),
+      findExistingDraft: publisher.findExistingDraft
+        ? (title) => publisher.findExistingDraft!(title)
+        : undefined,
+    });
+    logger.info(`[发布] taskId=${identity.taskId} action=${outcome.action}`);
+    return outcome.result;
+  }
+
   private async isDryRun(
     event: WorkflowEvent<WeixinWorkflowParams>,
   ): Promise<boolean> {
+    // 全局总开关优先级最高：未开启时任何请求（含 forcePublish）都只能 dry-run。
+    if (!isPublishEnabled()) {
+      return true;
+    }
     if (event.payload.forcePublish) {
       return false;
     }

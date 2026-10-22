@@ -5,6 +5,10 @@ import {
   TimestampFormat,
 } from "@zilla/logger-upstream";
 import { getLoggerContext } from "@src/core/logger/logger-context.ts";
+import {
+  redactSensitiveText,
+  redactValue,
+} from "@src/utils/security/redact.ts";
 
 export { LogLevel, LogLevelOperator, TimestampFormat };
 
@@ -71,6 +75,8 @@ export class Logger extends UpstreamLogger {
     throws?: boolean,
     context?: unknown,
   ) {
+    message = redactSensitiveText(message);
+    context = redactValue(context);
     const logMessage = this.message(message, level, context);
     if (canLog(this, level)) {
       const activeContext = getLoggerContext();

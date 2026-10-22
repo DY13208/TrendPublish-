@@ -1,3 +1,4 @@
+import type { PublishRecordStore } from "@src/core/ports/publish-record-store.ts";
 import { ContentRanker } from "@src/modules/content-rank/ai.content-ranker.ts";
 import { AISummarizer } from "@src/modules/summarizer/ai.summarizer.ts";
 import { WeixinPublisher } from "@src/integrations/publish/providers/weixin-publisher.ts";
@@ -63,6 +64,7 @@ export interface CreateWeixinArticleDependenciesOptions {
   mode?: RuntimeMode;
   vectorStoreFactory?: () => Promise<VectorStore>;
   editorialMemoryStore?: EditorialMemoryStore;
+  publishRecordStore?: PublishRecordStore;
   profileId?: string;
   accountId?: string;
   accountBrand?: JsonObject;
@@ -217,6 +219,7 @@ export async function createWeixinArticleDependencies(
       artifactStore,
       runStateStore,
       editorialMemoryStore,
+      publishRecordStore: options.publishRecordStore,
       mode: options.mode ?? "local",
     },
     config: {

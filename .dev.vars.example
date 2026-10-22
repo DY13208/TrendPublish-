@@ -30,3 +30,6 @@ NOTIFICATION_CHANNELS=
 BARK_URL=
 DINGTALK_WEBHOOK=
 FEISHU_WEBHOOK_URL=
+
+# 全局发布总开关：必须为 true 才允许任何微信写操作；默认 false（强制 dry-run）
+PUBLISH_ENABLED=false

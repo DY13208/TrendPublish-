@@ -1,3 +1,4 @@
+import { assertPublishEnabled } from "@src/utils/security/publish-guard.ts";
 import {
   ContentImageUploader,
   ContentPublisher,
@@ -60,6 +61,7 @@ export class WeixinRelayPublisher
   }
 
   async uploadImage(imageUrl: string): Promise<string> {
+    assertPublishEnabled("relay upload-image");
     const result = await this.request<{ mediaId: string }>(
       "/api/weixin/upload-image",
       { imageUrl },
@@ -71,6 +73,7 @@ export class WeixinRelayPublisher
     imageUrl: string,
     imageBuffer?: ArrayBuffer | Uint8Array,
   ): Promise<string> {
+    assertPublishEnabled("relay upload-content-image");
     const result = await this.request<{ url: string }>(
       "/api/weixin/upload-content-image",
       {
@@ -82,6 +85,7 @@ export class WeixinRelayPublisher
   }
 
   async publishArticle(request: PublishArticleRequest): Promise<PublishResult> {
+    assertPublishEnabled("relay publish");
     const result = await this.request<PublishResult>(
       "/api/weixin/publish",
       request,

@@ -17,6 +17,7 @@ import {
   WeixinApiClient,
 } from "@src/integrations/publish/providers/weixin-api-client.ts";
 import { Logger } from "@zilla/logger";
+import { assertPublishEnabled } from "@src/utils/security/publish-guard.ts";
 const logger = new Logger("weixin-publisher");
 
 interface WeixinToken {
@@ -117,6 +118,7 @@ export class WeixinPublisher implements ContentPublisher, ContentImageUploader {
     digest: string,
     mediaId: string,
   ): Promise<WeixinDraft> {
+    assertPublishEnabled("draft/add");
     const token = await this.ensureAccessToken();
 
     const provider = this.getProvider();
@@ -149,11 +151,34 @@ export class WeixinPublisher implements ContentPublisher, ContentImageUploader {
     }
   }
   /**
+   * 只读状态检查：在最近的草稿中按标题查找，返回 media_id（官方接口 draft/batchget）。
+   */
+  async findExistingDraft(title: string): Promise<string | null> {
+    const token = await this.ensureAccessToken();
+    const response = await this.apiClient.postJson<{
+      item?: Array<{
+        media_id: string;
+        content?: { news_item?: Array<{ title?: string }> };
+      }>;
+    }>("/cgi-bin/draft/batchget", token, {
+      offset: 0,
+      count: 20,
+      no_content: 1,
+    });
+    const normalized = title.trim();
+    const match = response.item?.find((item) =>
+      item.content?.news_item?.some((news) => news.title?.trim() === normalized)
+    );
+    return match?.media_id ?? null;
+  }
+
+  /**
    * 上传图片到微信
    * @param imageUrl 图片URL
    * @returns 图片ID
    */
   async uploadImage(imageUrl: string): Promise<string> {
+    assertPublishEnabled("material/add_material");
     if (!imageUrl) {
       // 如果图片URL为空，则返回一个默认的图片ID
       return "SwCSRjrdGJNaWioRQUHzgF68BHFkSlb_f5xlTquvsOSA6Yy0ZRjFo0aW9eS3JJu_";
@@ -210,6 +235,7 @@ export class WeixinPublisher implements ContentPublisher, ContentImageUploader {
     if (!imageUrl) {
       throw new Error("图片URL不能为空");
     }
+    assertPublishEnabled("media/uploadimg");
 
     const token = await this.ensureAccessToken();
 

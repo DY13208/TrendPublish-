@@ -26,16 +26,21 @@ import type {
   RuntimeMode,
 } from "@src/core/ports/run-state-store.ts";
 import type { EditorialMemoryStore } from "@src/core/ports/editorial-memory-store.ts";
+import type { PublishRecordStore } from "@src/core/ports/publish-record-store.ts";
 
 export interface WeixinArticlePublisher
   extends ContentPublisher, ContentImageUploader {
   validateIpWhitelist(): Promise<string | boolean>;
+  /** 可选的只读状态检查，用于幂等重试。 */
+  findExistingDraft?(title: string): Promise<string | null>;
 }
 
 export interface WeixinArticleRuntimeDependencies {
   artifactStore: ArtifactStore;
   runStateStore: RunStateStore;
   editorialMemoryStore: EditorialMemoryStore;
+  /** 发布记录（幂等）。未提供时使用进程内存储。 */
+  publishRecordStore?: PublishRecordStore;
   mode: RuntimeMode;
 }
 
