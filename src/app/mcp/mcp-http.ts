@@ -33,6 +33,6 @@ export async function handleMcpHttpRequest(
   const response = await handleMcpPayload(payload, ctxFactory);
   if (response === null) return new Response(null, { status: 202 });
   return Response.json(response, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json; charset=utf-8" },
   });
 }
