@@ -31,6 +31,7 @@ import { ArtifactPreview, ArtifactsPanel } from "./pages/artifacts.tsx";
 import { ArticleQualityWorkspace } from "./pages/quality.tsx";
 import { RuntimeConfigPanel } from "./pages/runtime-config.tsx";
 import { RunsWorkspace } from "./pages/runs.tsx";
+import { SecretsPanel } from "./pages/secrets.tsx";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -428,6 +429,10 @@ function App() {
               run={selectedRun}
               onPreviewArtifact={setPreviewArtifact}
             />
+          )}
+
+          {activeView === "secrets" && (
+            <SecretsPanel apiKey={apiKey} onAdminKeyRotated={logout} />
           )}
 
           {activeView === "settings" && (

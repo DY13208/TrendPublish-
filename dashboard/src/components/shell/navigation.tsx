@@ -3,6 +3,7 @@ import {
   FileText,
   Globe2,
   Home,
+  KeyRound,
   Layers3,
   Network,
   Settings,
@@ -100,6 +101,12 @@ function navItems(config: NavConfig, latestRun: NavRun) {
       label: "系统设置",
       meta: "高级",
       icon: <Settings className="size-4" />,
+    },
+    {
+      view: "secrets" as const,
+      label: "密钥设置",
+      meta: "加密存储",
+      icon: <KeyRound className="size-4" />,
     },
   ];
 }

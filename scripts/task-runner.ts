@@ -58,6 +58,7 @@ const TEST_FILES = [
   "src/features/weixin-article/services/freepublish.service.test.ts",
   "src/features/weixin-article/services/article-submission-gate.service.test.ts",
   "src/app/mcp/mcp.test.ts",
+  "src/app/secrets/secrets.test.ts",
   "src/utils/security/redact.test.ts",
   "src/utils/security/publish-guard.test.ts",
   "src/experiments/article-quality/research.service.test.ts",

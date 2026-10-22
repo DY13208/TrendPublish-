@@ -23,15 +23,17 @@ export function getWorkflow(type: WorkflowType) {
 }
 
 export const startCronJobs = async () => {
-  const config = await getAppConfig();
-  const notifier = createArticleNotifier(config);
-  notifier.notify("定时任务启动", "定时任务启动");
+  // 每次触发都重新读取配置，Dashboard 更新密钥后无需重启即可生效。
+  createArticleNotifier(await getAppConfig()).notify(
+    "定时任务启动",
+    "定时任务启动",
+  );
   logger.info("初始化定时任务...");
 
   // 正式发布状态轮询：每分钟检查到期的 submitted 记录（PUBLISH_ENABLED 未开启时不做任何事）。
   cron.schedule("* * * * *", async () => {
     try {
-      const polled = await pollDuePublishRecords(config);
+      const polled = await pollDuePublishRecords(await getAppConfig());
       if (polled > 0) logger.info(`[正式发布] 本轮轮询 ${polled} 条记录`);
     } catch (error) {
       logger.error("发布状态轮询失败:", error);
@@ -42,6 +44,8 @@ export const startCronJobs = async () => {
   cron.schedule(
     "*/5 * * * *",
     async () => {
+      const config = await getAppConfig();
+      const notifier = createArticleNotifier(config);
       try {
         logger.info("检查到期微信文章工作流...");
         const runtimeStores = createLocalArticleRuntimeStores(config);

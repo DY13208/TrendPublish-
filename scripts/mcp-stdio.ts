@@ -7,6 +7,7 @@ import {
   initializeAppConfig,
   parseConfigArgs,
 } from "@src/utils/config/app-config.ts";
+import { initSecretsStore } from "@src/app/secrets/init-secrets.ts";
 import { handleMcpPayload } from "@src/app/mcp/mcp-protocol.ts";
 import { createDefaultMcpContext } from "@src/app/mcp/mcp-context.ts";
 import type { McpContext } from "@src/app/mcp/mcp-tools.ts";
@@ -23,6 +24,7 @@ for (const method of ["log", "info", "warn", "debug"] as const) {
 installConsoleRedaction();
 registerSecretsFromEnv();
 
+await initSecretsStore();
 const parsed = parseConfigArgs(Deno.args);
 const config = await initializeAppConfig({ configPath: parsed.configPath });
 registerSecretsFromObject(config);

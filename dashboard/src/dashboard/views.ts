@@ -6,7 +6,8 @@ export type DashboardView =
   | "quality"
   | "runs"
   | "artifacts"
-  | "settings";
+  | "settings"
+  | "secrets";
 
 export const VIEW_META: Record<
   DashboardView,
@@ -44,5 +45,10 @@ export const VIEW_META: Record<
   settings: {
     title: "系统设置",
     description: "管理文章方案、定时规则、共享能力和高级配置。",
+  },
+  secrets: {
+    title: "密钥设置",
+    description:
+      "配置公众号、大模型、图片、通知等密钥（加密保存，只写不读），测试连接。",
   },
 };

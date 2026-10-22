@@ -39,6 +39,21 @@ export default defineConfig((runtime) => ({
       dashscope: {
         apiKey: runtime.secret("DASHSCOPE_API_KEY"),
       },
+      minimax: {
+        apiKey: runtime.secret("MINIMAX_API_KEY"),
+      },
+    },
+    vector: {
+      embedding: {
+        baseUrl: runtime.value("EMBEDDING_BASE_URL", ""),
+        apiKey: runtime.secret("EMBEDDING_API_KEY"),
+        model: runtime.value("EMBEDDING_MODEL", ""),
+      },
+    },
+    notify: {
+      bark: { url: runtime.secret("BARK_URL") },
+      dingtalk: { webhook: runtime.secret("DINGTALK_WEBHOOK") },
+      feishu: { webhookUrl: runtime.secret("FEISHU_WEBHOOK_URL") },
     },
     publish: {
       weixin: {
@@ -80,7 +95,15 @@ export default defineConfig((runtime) => ({
       count: Number(runtime.value("ARTICLE_COUNT", "10")),
       dryRun: true,
       notifications: {
-        channels: [],
+        // 未显式设置 NOTIFICATION_CHANNELS 时，自动启用已配置 webhook 的渠道（可在 Dashboard 密钥页设置）。
+        channels:
+          (runtime.value("NOTIFICATION_CHANNELS", "")
+            ? splitList(runtime.value("NOTIFICATION_CHANNELS", ""))
+            : [
+              runtime.secret("BARK_URL") ? "bark" : "",
+              runtime.secret("DINGTALK_WEBHOOK") ? "dingtalk" : "",
+              runtime.secret("FEISHU_WEBHOOK_URL") ? "feishu" : "",
+            ].filter(Boolean)) as Array<"bark" | "dingtalk" | "feishu">,
       },
       cover: {
         enabled: false,

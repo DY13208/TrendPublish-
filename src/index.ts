@@ -1,3 +1,4 @@
+import { initSecretsStore } from "@src/app/secrets/init-secrets.ts";
 import { startCronJobs } from "@src/controllers/cron.ts";
 import {
   initializeAppConfig,
@@ -16,6 +17,7 @@ async function bootstrap() {
   installConsoleRedaction();
   registerSecretsFromEnv();
   const parsedArgs = parseConfigArgs(Deno.args);
+  await initSecretsStore();
   const config = await initializeAppConfig({
     configPath: parsedArgs.configPath,
   });

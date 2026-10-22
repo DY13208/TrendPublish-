@@ -1,3 +1,5 @@
+import { handleSecretsRequest } from "@src/app/secrets/secrets-api.ts";
+import { isPlaceholderAdminKey } from "@src/app/secrets/secret-fields.ts";
 import { handleMcpHttpRequest } from "@src/app/mcp/mcp-http.ts";
 import { createDefaultMcpContext } from "@src/app/mcp/mcp-context.ts";
 import {
@@ -138,10 +140,23 @@ rpcServer.registerRoute("triggerWorkflow", triggerWorkflow);
 
 async function verifyRequestAuth(req: Request): Promise<Response | null> {
   const API_KEY = (await getAppConfig()).server.apiKey;
+  if (isPlaceholderAdminKey(API_KEY)) {
+    // 管理员 key 仍是占位值：拒绝所有受保护接口，必须先在本机完成初始化。
+    return jsonResponse({
+      error: {
+        code: -32001,
+        message: "需要先初始化管理员 key",
+        data: {
+          error:
+            "bootstrap_required：请在服务器本机打开 /dashboard 设置管理员 key",
+        },
+      },
+    }, 401);
+  }
   const authHeader = req.headers.get("Authorization");
   if (
     !authHeader || !authHeader.startsWith("Bearer ") ||
-    authHeader.split(" ")[1] !== API_KEY
+    !timingSafeEqual(authHeader.split(" ")[1] ?? "", API_KEY)
   ) {
     return jsonResponse({
       error: {
@@ -213,6 +228,16 @@ async function handlePublishRequest(req: Request, url: URL): Promise<Response> {
     }
   }
   return jsonResponse({ error: "not_found" }, 404);
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let diff = left.length ^ right.length;
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    diff |= (left[i] ?? 0) ^ (right[i] ?? 0);
+  }
+  return diff === 0;
 }
 
 function jsonResponse(value: unknown, status = 200): Response {
@@ -575,9 +600,16 @@ function isDashboardPath(pathname: string): boolean {
 }
 
 // 请求处理器
-const handler = async (req: Request): Promise<Response> => {
+const handler = async (
+  req: Request,
+  info?: Deno.ServeHandlerInfo,
+): Promise<Response> => {
   try {
     const url = new URL(req.url);
+    const clientIp = (info?.remoteAddr as Deno.NetAddr | undefined)?.hostname;
+    if (url.pathname.startsWith("/api/secrets")) {
+      return await handleSecretsRequest(req, url, clientIp, verifyRequestAuth);
+    }
     if (req.method === "GET" && isDashboardPath(url.pathname)) {
       return await handleDashboardRequest(req);
     }

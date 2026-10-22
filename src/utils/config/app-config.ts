@@ -8,6 +8,7 @@ import {
   resolveWeixinPublishAccount,
   TrendPublishConfigSource,
 } from "@src/utils/config/define-config.ts";
+import { getSecretOverlayValue } from "@src/utils/config/secret-overlay.ts";
 import { configureLoggerObservability } from "@src/core/logger/configure-logger-observability.ts";
 
 export class ConfigurationError extends Error {
@@ -166,10 +167,12 @@ export function createConfigRuntime(options: {
     if (fromValues !== undefined && fromValues !== null) {
       return String(fromValues);
     }
-    return readProcessValue(name);
+    return getSecretOverlayValue(name) ?? readProcessValue(name);
   };
 
   const readSecret = (name: string): string | undefined => {
+    const fromOverlay = getSecretOverlayValue(name);
+    if (fromOverlay !== undefined) return fromOverlay;
     const secretPath = resolve(secretDir, name);
     if (fileExists(secretPath)) {
       return readTextFile(secretPath)?.trim();

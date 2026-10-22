@@ -10,3 +10,7 @@ services:
     volumes:
       - ./config/trendpublish.config.ts:/app/config/trendpublish.config.ts:ro
       - ./data/temp:/app/src/temp
+      # 加密密钥存储与审计日志（Dashboard 密钥设置页）
+      - ./data/secrets:/app/data/secrets
+      # 主密钥文件（也可改用 TRENDPUBLISH_MASTER_KEY 环境变量），需单独备份
+      - ./data/keys:/app/data/keys

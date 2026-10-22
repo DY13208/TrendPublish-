@@ -61,3 +61,7 @@ tmp/
 *.sqlite
 *.sqlite3
 *.db
+
+# 密钥存储（加密值、审计日志、主密钥）绝不入库
+data/
+*.key
