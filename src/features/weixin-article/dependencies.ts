@@ -3,6 +3,7 @@ import { INotifier } from "@src/core/ports/notifier.ts";
 import {
   ContentImageUploader,
   ContentPublisher,
+  type WeixinFreePublishStatus,
 } from "@src/core/ports/content-publisher.ts";
 import { WeixinArticleContentDedupService } from "@src/features/weixin-article/services/content-dedup.service.ts";
 import { WeixinArticleContentProcessService } from "@src/features/weixin-article/services/content-process.service.ts";
@@ -33,6 +34,12 @@ export interface WeixinArticlePublisher
   validateIpWhitelist(): Promise<string | boolean>;
   /** 可选的只读状态检查，用于幂等重试。 */
   findExistingDraft?(title: string): Promise<string | null>;
+  /** 可选：正式发布（freepublish/submit）。 */
+  submitFreePublish?(
+    mediaId: string,
+  ): Promise<{ publishId: string; msgDataId?: string }>;
+  /** 可选：查询正式发布状态（freepublish/get）。 */
+  getFreePublishStatus?(publishId: string): Promise<WeixinFreePublishStatus>;
 }
 
 export interface WeixinArticleRuntimeDependencies {

@@ -1,3 +1,4 @@
+import { withMaterialCache } from "@src/features/weixin-article/services/material-cache.ts";
 import type { PublishRecordStore } from "@src/core/ports/publish-record-store.ts";
 import { ContentRanker } from "@src/modules/content-rank/ai.content-ranker.ts";
 import { AISummarizer } from "@src/modules/summarizer/ai.summarizer.ts";
@@ -83,7 +84,14 @@ export async function createWeixinArticleDependencies(
   };
   const effectiveAccountId = options.accountId ??
     config.features.article.publisher.accountId;
-  const publisher = createPublisher(config, effectiveAccountId);
+  const rawPublisher = createPublisher(config, effectiveAccountId);
+  const publisher = options.publishRecordStore
+    ? withMaterialCache(
+      rawPublisher,
+      options.publishRecordStore,
+      effectiveAccountId || "default",
+    )
+    : rawPublisher;
   const notifier = createArticleNotifier(config);
   const llmResolver = new LlmProviderResolver(config);
   const llmProvider = await llmResolver.getDefaultProvider();
@@ -247,7 +255,7 @@ function resolveResearchSearchProviders(
   ) as FetchProviderId[];
 }
 
-function createPublisher(
+export function createPublisher(
   config: ResolvedTrendPublishConfig,
   accountId = config.features.article.publisher.accountId,
 ): WeixinArticlePublisher {

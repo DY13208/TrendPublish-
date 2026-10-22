@@ -1,4 +1,4 @@
-import { SQLitePublishRecordStore } from "@src/platform/local/sqlite-publish-record-store.ts";
+import { getLocalPublishRecordStore } from "@src/app/weixin-article/publish-ops.ts";
 import {
   createWeixinArticleDependencies,
   CreateWeixinArticleDependenciesOptions,
@@ -29,9 +29,7 @@ export async function createLocalWeixinArticleDependencies(
     runStateStore: new LocalJsonRunStateStore(baseDir),
     editorialMemoryStore: options.editorialMemoryStore ??
       new SQLiteEditorialMemoryStore(config.storage.runtimeConfig.sqlitePath),
-    publishRecordStore: new SQLitePublishRecordStore(
-      config.storage.runtimeConfig.sqlitePath,
-    ),
+    publishRecordStore: getLocalPublishRecordStore(config),
     mode: "local",
     vectorStoreFactory: options.vectorStoreFactory ?? (async () => {
       const { SQLiteVectorStore } = await import(

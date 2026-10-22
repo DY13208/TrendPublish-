@@ -33,3 +33,5 @@ FEISHU_WEBHOOK_URL=
 
 # 全局发布总开关：必须为 true 才允许任何微信写操作；默认 false（强制 dry-run）
 PUBLISH_ENABLED=false
+# 发布模式：draft=只建草稿；publish=建草稿后 freepublish/submit 正式发布（仅 PUBLISH_ENABLED=true 时生效）
+PUBLISH_MODE=draft

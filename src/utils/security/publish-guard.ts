@@ -35,3 +35,28 @@ export function assertPublishEnabled(operation: string): void {
 export function setPublishEnabledOverrideForTesting(value?: boolean): void {
   override = value;
 }
+
+export type PublishMode = "draft" | "publish";
+
+let modeOverride: PublishMode | undefined;
+
+/**
+ * PUBLISH_MODE：draft（默认，只建草稿）| publish（建草稿后调用 freepublish/submit 正式发布）。
+ * 仅在 PUBLISH_ENABLED=true 时生效。
+ */
+export function getPublishMode(): PublishMode {
+  if (modeOverride) return modeOverride;
+  try {
+    const value = (globalThis as { Deno?: typeof Deno }).Deno?.env?.get(
+      "PUBLISH_MODE",
+    );
+    return value?.trim().toLowerCase() === "publish" ? "publish" : "draft";
+  } catch {
+    return "draft";
+  }
+}
+
+/** 仅测试使用。 */
+export function setPublishModeOverrideForTesting(value?: PublishMode): void {
+  modeOverride = value;
+}

@@ -71,3 +71,51 @@ Deno.test("WeixinPublisher blocks draft write when publish disabled", async () =
     setPublishEnabledOverrideForTesting(undefined);
   }
 });
+
+Deno.test("WeixinPublisher freepublish submit/get use official endpoints and guard", async () => {
+  const { WeixinPublisher } = await import(
+    "@src/integrations/publish/providers/weixin-publisher.ts"
+  );
+  const calls: Array<{ path: string; body: unknown }> = [];
+  const fakeClient = {
+    getAccessToken: () =>
+      Promise.resolve({ access_token: "t", expires_in: 7200 }),
+    postJson: (path: string, _token: string, body: unknown) => {
+      calls.push({ path, body });
+      if (path === "/cgi-bin/freepublish/submit") {
+        return Promise.resolve({ errcode: 0, publish_id: 2247483647 });
+      }
+      return Promise.resolve({ publish_status: 0, article_id: "a" });
+    },
+  };
+  const publisher = new WeixinPublisher(
+    // deno-lint-ignore no-explicit-any
+    { appId: "a", appSecret: "b", author: "x", accounts: {} } as any,
+    undefined,
+    // deno-lint-ignore no-explicit-any
+    fakeClient as any,
+  );
+  setPublishEnabledOverrideForTesting(false);
+  let blocked: unknown;
+  try {
+    await publisher.submitFreePublish("m1");
+  } catch (e) {
+    blocked = e;
+  }
+  assertEquals(blocked instanceof PublishDisabledError, true);
+  assertEquals(calls.length, 0);
+  setPublishEnabledOverrideForTesting(true);
+  try {
+    const submitted = await publisher.submitFreePublish("m1");
+    assertEquals(submitted.publishId, "2247483647");
+    const status = await publisher.getFreePublishStatus("2247483647");
+    assertEquals(status.publish_status, 0);
+    assertEquals(calls.map((c) => c.path), [
+      "/cgi-bin/freepublish/submit",
+      "/cgi-bin/freepublish/get",
+    ]);
+    assertEquals(calls[0].body, { media_id: "m1" });
+  } finally {
+    setPublishEnabledOverrideForTesting(undefined);
+  }
+});

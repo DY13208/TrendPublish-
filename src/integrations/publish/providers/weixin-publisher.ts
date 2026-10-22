@@ -3,7 +3,9 @@ import {
   ContentPublisher,
   PublishArticleRequest,
   PublishResult,
+  type WeixinFreePublishStatus,
 } from "@src/core/ports/content-publisher.ts";
+export type { WeixinFreePublishStatus };
 import type { ResolvedTrendPublishConfig } from "@src/utils/config/define-config.ts";
 import {
   type ResolvedWeixinPublishAccountConfig,
@@ -150,6 +152,43 @@ export class WeixinPublisher implements ContentPublisher, ContentImageUploader {
       throw error;
     }
   }
+  /**
+   * 正式发布草稿（官方接口 freepublish/submit），返回 publish_id。
+   */
+  async submitFreePublish(
+    mediaId: string,
+  ): Promise<{ publishId: string; msgDataId?: string }> {
+    assertPublishEnabled("freepublish/submit");
+    const token = await this.ensureAccessToken();
+    const response = await this.apiClient.postJson<{
+      publish_id?: string | number;
+      msg_data_id?: string | number;
+    }>("/cgi-bin/freepublish/submit", token, { media_id: mediaId });
+    if (response.publish_id === undefined || response.publish_id === null) {
+      throw new Error("freepublish/submit 未返回 publish_id");
+    }
+    return {
+      publishId: String(response.publish_id),
+      msgDataId: response.msg_data_id === undefined
+        ? undefined
+        : String(response.msg_data_id),
+    };
+  }
+
+  /**
+   * 查询发布状态（官方接口 freepublish/get，只读）。
+   */
+  async getFreePublishStatus(
+    publishId: string,
+  ): Promise<WeixinFreePublishStatus> {
+    const token = await this.ensureAccessToken();
+    return await this.apiClient.postJson<WeixinFreePublishStatus>(
+      "/cgi-bin/freepublish/get",
+      token,
+      { publish_id: publishId },
+    );
+  }
+
   /**
    * 只读状态检查：在最近的草稿中按标题查找，返回 media_id（官方接口 draft/batchget）。
    */

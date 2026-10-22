@@ -1,3 +1,13 @@
+import {
+  createFreePublishService,
+  getLocalPublishRecordStore,
+} from "@src/app/weixin-article/publish-ops.ts";
+import {
+  ReplayConflictError,
+  SubmitStateUnknownError,
+} from "@src/features/weixin-article/services/freepublish.service.ts";
+import { isPublishEnabled } from "@src/utils/security/publish-guard.ts";
+import { redactSensitiveText } from "@src/utils/security/redact.ts";
 import { triggerWorkflow } from "./controllers/workflow.controller.ts";
 import { getAppConfig } from "@src/utils/config/app-config.ts";
 import { renderDashboardHtml } from "@src/app/weixin-article/dashboard.html.ts";
@@ -142,6 +152,65 @@ async function verifyRequestAuth(req: Request): Promise<Response | null> {
     }, 401);
   }
   return null;
+}
+
+/**
+ * 发布记录查询与安全重放：
+ *   GET  /api/publish/records/{taskId}
+ *   POST /api/publish/replay  { taskId, confirmNotSubmitted? }
+ * 重放遵守 PUBLISH_ENABLED 与幂等规则（见 FreePublishService.replay）。
+ */
+async function handlePublishRequest(req: Request, url: URL): Promise<Response> {
+  const unauthorized = await verifyRequestAuth(req);
+  if (unauthorized) return unauthorized;
+  const config = await getAppConfig();
+  const store = getLocalPublishRecordStore(config);
+  const recordMatch = url.pathname.match(/^\/api\/publish\/records\/([\w-]+)$/);
+  if (req.method === "GET" && recordMatch) {
+    const record = await store.get(recordMatch[1]);
+    return record
+      ? jsonResponse({ record })
+      : jsonResponse({ error: "not_found" }, 404);
+  }
+  if (req.method === "POST" && url.pathname === "/api/publish/replay") {
+    if (!isPublishEnabled()) {
+      return jsonResponse({
+        error: "publish_disabled",
+        message: "PUBLISH_ENABLED 未开启，重放被拒绝",
+      }, 403);
+    }
+    const body = await req.json().catch(() => ({})) as {
+      taskId?: string;
+      confirmNotSubmitted?: boolean;
+    };
+    if (!body.taskId) return jsonResponse({ error: "taskId_required" }, 400);
+    const record = await store.get(body.taskId);
+    if (!record) return jsonResponse({ error: "not_found" }, 404);
+    const service = createFreePublishService(config, record.accountId);
+    if (!service) {
+      return jsonResponse({
+        error: "unsupported",
+        message: "当前发布通道不支持正式发布",
+      }, 409);
+    }
+    try {
+      const outcome = await service.replay(body.taskId, {
+        confirmNotSubmitted: body.confirmNotSubmitted === true,
+      });
+      return jsonResponse(outcome);
+    } catch (error) {
+      const message = redactSensitiveText(
+        error instanceof Error ? error.message : String(error),
+      );
+      const conflict = error instanceof ReplayConflictError ||
+        error instanceof SubmitStateUnknownError;
+      return jsonResponse(
+        { error: conflict ? "conflict" : "replay_failed", message },
+        conflict ? 409 : 502,
+      );
+    }
+  }
+  return jsonResponse({ error: "not_found" }, 404);
 }
 
 function jsonResponse(value: unknown, status = 200): Response {
@@ -539,6 +608,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
     if (url.pathname === "/api/runs" || url.pathname.startsWith("/api/runs/")) {
       return await handleRunsRequest(req, url.pathname);
+    }
+    if (url.pathname.startsWith("/api/publish/")) {
+      return await handlePublishRequest(req, url);
     }
     if (url.pathname === "/api/artifacts") {
       return await handleArtifactRequest(req);

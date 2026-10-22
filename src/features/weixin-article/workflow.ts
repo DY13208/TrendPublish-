@@ -3,7 +3,11 @@ import {
   computePublishTaskIdentity,
   guardedPublish,
 } from "@src/features/weixin-article/services/publish-idempotency.service.ts";
-import { isPublishEnabled } from "@src/utils/security/publish-guard.ts";
+import {
+  getPublishMode,
+  isPublishEnabled,
+} from "@src/utils/security/publish-guard.ts";
+import { FreePublishService } from "@src/features/weixin-article/services/freepublish.service.ts";
 import {
   WorkflowEvent,
   WorkflowStepContext,
@@ -1063,9 +1067,10 @@ export class WeixinArticleWorkflow {
     });
     logger.info(`[发布] taskId=${identity.taskId}`);
     const publisher = this.dependencies.publisher;
+    const store = this.dependencies.runtime.publishRecordStore ??
+      fallbackPublishRecordStore;
     const outcome = await guardedPublish({
-      store: this.dependencies.runtime.publishRecordStore ??
-        fallbackPublishRecordStore,
+      store,
       identity,
       title: summaryTitle,
       runId,
@@ -1076,6 +1081,28 @@ export class WeixinArticleWorkflow {
         : undefined,
     });
     logger.info(`[发布] taskId=${identity.taskId} action=${outcome.action}`);
+    if (
+      getPublishMode() === "publish" && publisher.submitFreePublish &&
+      publisher.getFreePublishStatus
+    ) {
+      const service = new FreePublishService(
+        store,
+        {
+          submitFreePublish: (id) => publisher.submitFreePublish!(id),
+          getFreePublishStatus: (id) => publisher.getFreePublishStatus!(id),
+        },
+        this.dependencies.notifier,
+      );
+      const record = await service.submit(identity.taskId);
+      logger.info(
+        `[正式发布] taskId=${identity.taskId} status=${record.status}，后续由定时轮询更新`,
+      );
+      return {
+        ...outcome.result,
+        publishId: record.freepublishId ?? outcome.result.publishId,
+        status: record.status === "published" ? "published" : "pending",
+      };
+    }
     return outcome.result;
   }
 

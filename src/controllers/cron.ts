@@ -1,3 +1,4 @@
+import { pollDuePublishRecords } from "@src/app/weixin-article/publish-ops.ts";
 import cron from "npm:node-cron@3.0.3";
 import { Logger } from "@zilla/logger";
 import { isPublishEnabled } from "@src/utils/security/publish-guard.ts";
@@ -26,6 +27,16 @@ export const startCronJobs = async () => {
   const notifier = createArticleNotifier(config);
   notifier.notify("定时任务启动", "定时任务启动");
   logger.info("初始化定时任务...");
+
+  // 正式发布状态轮询：每分钟检查到期的 submitted 记录（PUBLISH_ENABLED 未开启时不做任何事）。
+  cron.schedule("* * * * *", async () => {
+    try {
+      const polled = await pollDuePublishRecords(config);
+      if (polled > 0) logger.info(`[正式发布] 本轮轮询 ${polled} 条记录`);
+    } catch (error) {
+      logger.error("发布状态轮询失败:", error);
+    }
+  }, { timezone: "Asia/Shanghai" });
 
   // Heartbeat 调度：具体业务时间由 Dashboard runtime config 控制。
   cron.schedule(
