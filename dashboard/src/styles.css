@@ -359,3 +359,317 @@ textarea {
     flex-direction: column;
   }
 }
+
+/* ------------------------------------------------------------------
+ * Visual refresh (2026-10)：参考“精选目录”风格——纯白画布、近黑墨色、
+ * 发丝线边框、大圆角卡片、胶囊按钮/标签、等宽小号标注、克制的动效。
+ * 仅覆盖视觉层，不改结构与功能。
+ * ------------------------------------------------------------------ */
+:root {
+  --tp-ink: #18181b;
+  --tp-ink-soft: #27272a;
+  --tp-muted: #5d5d66;
+  --tp-subtle: #6b6b73;
+  --tp-bg: #ffffff;
+  --tp-panel: #ffffff;
+  --tp-panel-strong: #ffffff;
+  --tp-panel-muted: #fafafa;
+  --tp-hover: rgba(0, 0, 0, 0.055);
+  --tp-wash: rgba(0, 0, 0, 0.035);
+  --tp-border: rgba(0, 0, 0, 0.075);
+  --tp-border-strong: rgba(0, 0, 0, 0.16);
+  --tp-line: rgba(0, 0, 0, 0.075);
+  --tp-accent: #18181b;
+  --tp-accent-strong: #0066fa;
+  --tp-accent-soft: rgba(0, 102, 250, 0.07);
+  --tp-radius: 10px;
+  --tp-radius-tile: 18px;
+  --tp-font-mono:
+    "Geist Mono",
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  --tp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tp-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --tp-shadow-raised: 0 12px 32px -12px rgba(0, 0, 0, 0.14);
+}
+
+body,
+.tp-surface,
+.mantine-AppShell-main {
+  background: var(--tp-bg);
+  color: var(--tp-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--tp-ink);
+  color: #fff;
+}
+
+.tp-header {
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: saturate(180%) blur(12px);
+  border-color: var(--tp-line) !important;
+}
+
+.tp-navbar,
+.tp-sidebar {
+  background: #fff !important;
+  border-color: var(--tp-line) !important;
+}
+
+/* 卡片：大圆角、发丝线、悬停微抬升 */
+.mantine-Card-root,
+.tp-card {
+  background: var(--tp-panel);
+  border-color: var(--tp-border) !important;
+  border-radius: var(--tp-radius-tile) !important;
+  box-shadow: var(--tp-shadow-card);
+  transition:
+    box-shadow 0.35s var(--tp-ease),
+    border-color 0.35s var(--tp-ease),
+    transform 0.35s var(--tp-ease);
+}
+
+.tp-resource-card:hover,
+.tp-interactive:hover {
+  border-color: var(--tp-border-strong) !important;
+  box-shadow: var(--tp-shadow-raised);
+  transform: translateY(-1px);
+}
+
+/* 按钮与标签：胶囊形 */
+.mantine-Button-root {
+  border-radius: 999px !important;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  transition:
+    background-color 0.2s var(--tp-ease),
+    transform 0.2s var(--tp-ease);
+}
+
+.mantine-Button-root:active {
+  transform: scale(0.98);
+}
+
+.mantine-Button-root[data-variant="filled"] {
+  background: var(--tp-ink);
+  color: #fff;
+}
+
+.mantine-Button-root[data-variant="filled"]:hover {
+  background: #000;
+}
+
+.mantine-Button-root[data-variant="default"],
+.mantine-Button-root[data-variant="light"] {
+  background: var(--tp-wash);
+  border-color: transparent;
+  color: var(--tp-ink);
+}
+
+.mantine-Button-root[data-variant="default"]:hover,
+.mantine-Button-root[data-variant="light"]:hover {
+  background: var(--tp-hover);
+}
+
+.mantine-Badge-root,
+.tp-badge {
+  border-radius: 999px !important;
+  font-family: var(--tp-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+/* 表单 */
+.mantine-Input-input {
+  border-radius: 12px !important;
+  border-color: var(--tp-border-strong);
+  background: #fff;
+  transition: border-color 0.2s var(--tp-ease), box-shadow 0.2s var(--tp-ease);
+}
+
+.mantine-Input-input:focus,
+.mantine-Input-input:focus-within {
+  border-color: var(--tp-ink);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+:focus-visible {
+  outline: 2px solid var(--tp-accent-strong);
+  outline-offset: 2px;
+}
+
+/* 导航：胶囊式选中态 */
+.tp-nav-item {
+  border-radius: 999px !important;
+  color: var(--tp-muted);
+  transition: background-color 0.2s var(--tp-ease), color 0.2s var(--tp-ease);
+}
+
+.tp-nav-item:hover {
+  background: var(--tp-wash) !important;
+  color: var(--tp-ink);
+}
+
+.tp-nav-active {
+  background: var(--tp-ink) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.tp-nav-active * {
+  color: inherit !important;
+}
+
+.tp-nav-active > span.absolute {
+  display: none;
+}
+
+.tp-icon-tile {
+  background: var(--tp-ink) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+}
+
+/* 排版：标题收紧字距，标注用等宽小写 */
+.tp-title,
+.tp-page-heading,
+h1,
+h2 {
+  letter-spacing: -0.025em;
+  color: var(--tp-ink);
+}
+
+.tp-kicker,
+.tp-eyebrow {
+  font-family: var(--tp-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: var(--tp-subtle);
+}
+
+.tp-muted {
+  color: var(--tp-muted);
+}
+
+.tp-subtle {
+  color: var(--tp-subtle);
+}
+
+code,
+.tp-code {
+  font-family: var(--tp-font-mono);
+}
+
+/* 表格 */
+table {
+  border-collapse: collapse;
+}
+
+thead th {
+  font-family: var(--tp-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tp-subtle);
+}
+
+tbody tr {
+  transition: background-color 0.15s var(--tp-ease);
+}
+
+tbody tr:hover {
+  background: var(--tp-wash);
+}
+
+/* 状态：危险/警告/成功提示 */
+.tp-danger {
+  border-radius: 12px !important;
+}
+
+.tp-warning {
+  border-radius: 12px !important;
+}
+
+.tp-ok {
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  background: rgba(22, 163, 74, 0.06);
+  color: #15803d;
+  border-radius: 12px;
+}
+
+/* 空/加载态 */
+.tp-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--tp-wash),
+    var(--tp-hover),
+    var(--tp-wash)
+  );
+  background-size: 200% 100%;
+  animation: tp-shimmer 1.4s linear infinite;
+  border-radius: 10px;
+}
+
+@keyframes tp-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* 进入动画 */
+.mantine-AppShell-main > * {
+  animation: tp-rise 0.45s var(--tp-ease) both;
+}
+
+@keyframes tp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 登录页 */
+.tp-login {
+  background:
+    radial-gradient(
+      1200px 500px at 50% -10%,
+      rgba(0, 102, 250, 0.06),
+      transparent 60%
+    ),
+    #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.tp-nav-active [class*="bg-"] {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.tp-header .tp-icon-tile,
+.tp-header [class*="bg-[#f38020]"] {
+  background: var(--tp-ink) !important;
+}

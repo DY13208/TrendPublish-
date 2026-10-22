@@ -153,7 +153,7 @@ export function SecretsPanel(
           }
         />
         {message && (
-          <div className="mb-3 rounded-md border border-[#bbf7d0] bg-[#ecfdf5] p-2 text-sm text-[#047857]">
+          <div className="tp-ok mb-3 p-2 text-sm">
             {message}
           </div>
         )}
@@ -187,9 +187,7 @@ export function SecretsPanel(
               {(group === "weixin" || group === "llm") && tests[group] && (
                 <div
                   className={`mb-2 rounded-md border p-2 text-sm ${
-                    tests[group]!.ok
-                      ? "border-[#bbf7d0] bg-[#ecfdf5] text-[#047857]"
-                      : "tp-danger"
+                    tests[group]!.ok ? "tp-ok" : "tp-danger"
                   }`}
                 >
                   {tests[group]!.message}
@@ -197,7 +195,7 @@ export function SecretsPanel(
               )}
               <div className="grid gap-2 md:grid-cols-2">
                 {fields.filter((f) => f.group === group).map((field) => (
-                  <label key={field.name} className="space-y-1">
+                  <label key={field.name} className="block space-y-1">
                     <span className="flex items-center gap-2 text-xs text-[#475569]">
                       {field.label}
                       <code className="text-[10px] text-[#94a3b8]">
@@ -211,7 +209,7 @@ export function SecretsPanel(
                           : "未配置"}
                       </Badge>
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 [&>*:first-child]:flex-1">
                       <Input
                         type={field.secret ? "password" : "text"}
                         autoComplete="new-password"

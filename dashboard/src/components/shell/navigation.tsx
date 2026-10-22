@@ -202,7 +202,7 @@ export function Sidebar(
             )}
           >
             {activeView === item.view && (
-              <span className="absolute left-0 top-2 h-5 w-0.5 rounded-full bg-[#f38020]" />
+              <span className="absolute left-0 top-2 h-5 w-0.5 rounded-full bg-[#18181b]" />
             )}
             <span
               className={cx(

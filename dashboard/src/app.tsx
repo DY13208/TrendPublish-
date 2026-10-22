@@ -44,7 +44,7 @@ const queryClient = new QueryClient({
 });
 
 const theme = createTheme({
-  primaryColor: "blue",
+  primaryColor: "dark",
   fontFamily:
     "Inter, IBM Plex Sans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
   defaultRadius: "md",
@@ -235,12 +235,12 @@ function App() {
               size="sm"
               aria-label="打开导航"
             />
-            <ThemeIcon radius="md" size={34} color="orange">
+            <ThemeIcon radius="md" size={34} color="dark">
               <Rocket className="size-4" />
             </ThemeIcon>
             <div className="min-w-0">
               <Group gap={8} wrap="nowrap">
-                <span className="hidden h-1.5 w-1.5 rounded-full bg-[#f38020] lg:block" />
+                <span className="hidden h-1.5 w-1.5 rounded-full bg-[#0066fa] lg:block" />
                 <Text
                   fw={700}
                   size="lg"

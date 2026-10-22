@@ -51,13 +51,13 @@ export function LoginView(
 
   if (status?.bootstrapRequired) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f8fafc] px-4">
+      <main className="tp-login grid min-h-screen place-items-center px-4">
         <Card className="w-full max-w-md p-6">
           <div className="mb-4">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#f38020]">
+            <div className="mb-3 tp-kicker">
               TrendPublish
             </div>
-            <h1 className="tp-title text-2xl font-semibold">
+            <h1 className="tp-title text-3xl font-semibold">
               首次初始化：设置管理员 key
             </h1>
             <p className="tp-muted mt-2 text-sm leading-6">
@@ -131,13 +131,13 @@ export function LoginView(
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f8fafc] px-4">
+    <main className="tp-login grid min-h-screen place-items-center px-4">
       <Card className="w-full max-w-md p-6">
         <div className="mb-6">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#f38020]">
+          <div className="mb-3 tp-kicker">
             TrendPublish
           </div>
-          <h1 className="tp-title text-2xl font-semibold">
+          <h1 className="tp-title text-3xl font-semibold">
             TrendPublish 控制台
           </h1>
           <p className="tp-muted mt-2 text-sm leading-6">
